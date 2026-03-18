@@ -1,6 +1,13 @@
+# Environment variables
+.env
+
+# Python
 .venv/
 __pycache__/
 *.pyc
 
+# Chroma DB
 chroma_db/
+
+# Cached embeddings
 embeddings.pkl
