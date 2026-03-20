@@ -1,5 +1,27 @@
+
+import os
 import chromadb
+from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
+from openai import OpenAI
+
+from memory import SessionMemory
+from rag import (
+    retrieve_context,
+    generate_answer,
+    rewrite_query_with_history,
+    initialize_retrieval,   # 🔥 IMPORTANT
+)
+
+# -----------------------------
+# Load environment
+# -----------------------------
+load_dotenv()
+
+# -----------------------------
+# OpenAI client (needed for query rewriting)
+# -----------------------------
+llm_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # -----------------------------
 # Config
@@ -8,7 +30,7 @@ CHROMA_DB_PATH = "chroma_db"
 COLLECTION_NAME = "documents"
 
 # -----------------------------
-# Load embedding model
+# Load embedding model (optional for debug)
 # -----------------------------
 print("Loading embedding model...")
 model = SentenceTransformer(
@@ -17,17 +39,28 @@ model = SentenceTransformer(
 )
 
 # -----------------------------
-# Load Chroma DB (persistent)
+# Connect to Chroma
 # -----------------------------
 print("Connecting to Chroma...")
 client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
-
 collection = client.get_collection(name=COLLECTION_NAME)
 
 print(f"Loaded collection with {collection.count()} documents")
 
 # -----------------------------
-# Interactive query loop
+# 🔥 Initialize retrieval (FIXES BM25 ERROR)
+# -----------------------------
+print("Initializing retrieval components...")
+initialize_retrieval()
+
+# -----------------------------
+# Memory (session-based)
+# -----------------------------
+memory = SessionMemory()
+session_id = "user_1"
+
+# -----------------------------
+# Interactive loop
 # -----------------------------
 while True:
     query = input("\nAsk a question (type 'exit' to quit): ").strip()
@@ -41,44 +74,42 @@ while True:
         continue
 
     # -----------------------------
-    # Embed query
+    # Get history
     # -----------------------------
-    query_embedding = model.encode([query]).tolist()
+    history = memory.get_last_interactions(session_id)
 
     # -----------------------------
-    # Retrieve results (with distances)
+    # Rewrite query using memory
     # -----------------------------
-    results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=3,
-        include=["documents", "metadatas", "distances"]
+    rewritten_query = rewrite_query_with_history(
+        query,
+        history,
+        llm_client
     )
 
-    documents = results.get("documents", [[]])[0]
-    metadatas = results.get("metadatas", [[]])[0]
-    distances = results.get("distances", [[]])[0]
+    print(f"\nRewritten Query: {rewritten_query}")
 
     # -----------------------------
-    # Display results
+    # Retrieve context
     # -----------------------------
-    print("\nTop results:\n")
+    context, retrieved_items = retrieve_context(rewritten_query)
 
-    if not documents:
-        print("No results found.")
-        continue
+    print("\nRetrieved Chunks:")
+    for i, item in enumerate(retrieved_items, start=1):
+        score = item.get("rerank_score", None)
+        score_text = f"{score:.4f}" if score is not None else "N/A"
 
-    for i, doc in enumerate(documents):
-        page = metadatas[i].get("page", "N/A") if i < len(metadatas) else "N/A"
-        distance = distances[i] if i < len(distances) else None
+        print(f"{i}. Page {item['page']} | Score: {score_text}")
 
-        # Convert distance → similarity (approx)
-        similarity = 1 - distance if distance is not None else None
+    # -----------------------------
+    # Generate answer (original query)
+    # -----------------------------
+    answer = generate_answer(query, context)
 
-        print(f"Result {i+1} (Page {page}):")
+    print("\nAnswer:")
+    print(answer)
 
-        if distance is not None:
-            print(f"Distance: {distance:.4f} | Similarity: {similarity:.4f}")
-
-        print(doc[:300], "...\n")
-
-    print("-" * 60)
+    # -----------------------------
+    # Save memory
+    # -----------------------------
+    memory.add_interaction(session_id, query, answer)

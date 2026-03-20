@@ -44,6 +44,37 @@ print(f"Loaded collection with {collection.count()} documents")
 print("Connecting to OpenAI...")
 llm_client = OpenAI(api_key=api_key)
 
+def rewrite_query_with_history(query, history, llm_client):
+    if not history:
+        return query
+
+    history_text = "\n".join(
+        [f"Q: {h['query']}\nA: {h['answer']}" for h in history]
+    )
+
+    prompt = f"""
+You are helping improve search queries.
+
+Conversation history:
+{history_text}
+
+Current question:
+{query}
+
+Rewrite the question so it is self-contained and clear for document search.
+Do NOT answer the question.
+
+Return only the rewritten query.
+"""
+
+    response = llm_client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0
+    )
+
+    return response.choices[0].message.content.strip()
+
 def initialize_retrieval():
     global bm25, bm25_docs, bm25_metas
     bm25, bm25_docs, bm25_metas = build_bm25_index()

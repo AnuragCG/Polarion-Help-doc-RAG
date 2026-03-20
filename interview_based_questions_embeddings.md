@@ -12,6 +12,29 @@ Retrieval-Augmented Generation (RAG) is a system design pattern where:
 It helps reduce hallucinations and enables domain-specific question answering.
 
 ---
+## 🔹 What problem does memory solve?
+
+Follow-up queries are often ambiguous:
+
+> “How do I create it?”
+
+Memory allows rewriting into:
+
+> “How do I create a baseline collection?”
+
+This improves retrieval accuracy.
+
+---
+
+## 🔹 Why not send full history to the LLM?
+
+* Expensive (tokens)
+* Noisy
+* Reduces accuracy
+
+Instead, I use memory for **query rewriting only**.
+
+---
 
 ## 🔹 How does your RAG pipeline work?
 
@@ -161,7 +184,27 @@ I follow a structured approach:
 This helps isolate where the pipeline is breaking.
 
 ---
+🔹 What problem does memory solve?
 
+Follow-up queries are often ambiguous:
+
+“How do I create it?”
+
+Memory allows rewriting into:
+
+“How do I create a baseline collection?”
+
+This improves retrieval accuracy.
+
+🔹 Why not send full history to the LLM?
+
+Expensive (tokens)
+
+Noisy
+
+Reduces accuracy
+
+Instead, I use memory for query rewriting only.
 ## 🔹 What tradeoffs exist in your system?
 
 | Component      | Tradeoff                         |
@@ -237,3 +280,155 @@ This helps isolate where the pipeline is breaking.
 > I started with a basic RAG pipeline using dense retrieval and gradually improved it by adding hybrid search, reranking, context compression, and evaluation metrics.
 > I focused on measuring performance using Recall@K and LLM-based faithfulness, which helped me understand and fix retrieval and generation issues.
 > This project helped me build a strong understanding of how real-world RAG systems are designed and evaluated.
+
+
+# 🧠 Polarion Conversational RAG System
+
+## 📌 Overview
+
+This project implements a **Conversational Retrieval-Augmented Generation (RAG)** system over a large (~3000 pages) Polarion documentation dataset.
+
+It enables users to:
+
+* Ask natural language questions
+* Ask follow-up questions (context-aware)
+* Retrieve relevant documentation
+* Generate grounded, reliable answers
+
+---
+
+## 🚀 Features
+
+* ✅ Dense vector search (semantic retrieval)
+* ✅ BM25 keyword search (lexical retrieval)
+* ✅ Hybrid retrieval (Dense + BM25)
+* ✅ Cross-encoder reranking
+* ✅ Context compression
+* ✅ Conversational memory (session-based)
+* ✅ Query rewriting using history
+* ✅ Evaluation framework:
+
+  * Recall@K
+  * Relaxed Recall
+  * Keyword scoring
+  * LLM-based faithfulness
+
+---
+
+## 🏗️ Architecture
+
+```text
+User Query
+   ↓
+Session Memory
+   ↓
+Query Rewriting (LLM)
+   ↓
+Hybrid Retrieval
+   ├── Dense (Embeddings)
+   └── BM25 (Keyword Search)
+   ↓
+Merge + Deduplicate
+   ↓
+Reranking (Cross Encoder)
+   ↓
+Context Compression
+   ↓
+LLM (Answer Generation)
+   ↓
+Answer
+```
+
+---
+
+## 📂 Project Structure
+
+```text
+src/
+├── pdf_loader.py        # Load and process PDF
+├── chunker.py           # Chunking logic
+├── rag.py               # Core RAG pipeline
+├── query.py             # Conversational interface
+├── memory.py            # Session memory
+├── evaluator.py         # Evaluation metrics
+├── eval_runner.py       # Evaluation runner
+├── main.py              # (optional entry point)
+```
+
+---
+
+## ⚙️ Setup
+
+### 1. Install dependencies
+
+```bash
+pip install chromadb sentence-transformers openai python-dotenv rank-bm25
+```
+
+---
+
+### 2. Set environment variable
+
+Create a `.env` file:
+
+```text
+OPENAI_API_KEY=your_api_key_here
+```
+
+---
+
+### 3. Run the application
+
+```bash
+python src/query.py
+```
+
+---
+
+### 4. Run evaluation
+
+```bash
+python src/eval_runner.py
+```
+
+---
+
+## 🧪 Example Usage
+
+```text
+Q: What is a baseline collection?
+A: (Answer with page references)
+
+Q: How do I create it?
+→ Rewritten Query:
+  "How do I create a baseline collection?"
+```
+
+---
+
+## 📊 Evaluation Metrics
+
+| Metric             | Description                            |
+| ------------------ | -------------------------------------- |
+| Recall@K           | Checks if expected page is retrieved   |
+| Relaxed Recall     | Checks semantic correctness            |
+| Keyword Score      | Basic answer quality proxy             |
+| Faithfulness (LLM) | Verifies answer is grounded in context |
+
+---
+
+## 🧠 Key Learnings
+
+* Retrieval quality is more important than generation
+* Hybrid search improves recall significantly
+* Reranking improves precision
+* Context compression reduces noise
+* Evaluation is essential for improving RAG systems
+* Multiple document sections can contain valid answers
+* Conversational memory improves follow-up queries
+
+---
+
+
+
+

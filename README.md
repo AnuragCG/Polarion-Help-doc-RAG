@@ -14,12 +14,14 @@ The system allows users to:
 
 ## 🚀 Features
 
-* ✅ Dense vector search using embeddings
-* ✅ Hybrid retrieval (Dense + BM25)
-* ✅ Cross-encoder reranking for precision
-* ✅ Context compression for cleaner inputs
-* ✅ Grounded answer generation (no hallucinations)
-* ✅ Evaluation framework:
+✅ Dense vector search (semantic retrieval)
+✅ BM25 keyword search (lexical retrieval)
+✅ Hybrid retrieval (Dense + BM25)
+✅ Cross-encoder reranking
+✅ Context compression
+✅ Conversational memory (session-based)
+✅ Query rewriting using history
+✅ Evaluation framework:
 
   * Recall@K
   * Relaxed Recall
@@ -33,35 +35,38 @@ The system allows users to:
 ```
 User Query
    ↓
-Embedding (Dense Search)
-   +
-BM25 (Keyword Search)
+Session Memory
    ↓
-Merge Results
+Query Rewriting (LLM)
    ↓
-Re-ranking (Cross Encoder)
+Hybrid Retrieval
+   ├── Dense (Embeddings)
+   └── BM25 (Keyword Search)
+   ↓
+Merge + Deduplicate
+   ↓
+Reranking (Cross Encoder)
    ↓
 Context Compression
    ↓
 LLM (Answer Generation)
    ↓
-Evaluation (Offline)
+Answer
 ```
 
----
 
 ## 📂 Project Structure
 
 ```
 src/
-├── pdf_loader.py       # Load PDF documents
-├── chunker.py          # Chunking logic
-├── rag.py              # Core RAG pipeline
-├── query.py            # CLI interaction
-├── evaluator.py        # Evaluation metrics
-├── eval_runner.py      # Evaluation runner
-├── main.py             # Entry point
-```
+├── pdf_loader.py        # Load and process PDF
+├── chunker.py           # Chunking logic
+├── rag.py               # Core RAG pipeline
+├── query.py             # Conversational interface
+├── memory.py            # Session memory
+├── evaluator.py         # Evaluation metrics
+├── eval_runner.py       # Evaluation runner
+├── main.py              # (optional entry point)
 
 ---
 
