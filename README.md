@@ -1,61 +1,123 @@
-🧠 Architecture
-PDF → Chunking → Embeddings → Vector DB → Query → Retrieval
+# 🧠 Polarion RAG System (Retrieval-Augmented Generation)
 
-✅ “Challenges faced"
-- Handling large PDF (~3000 pages)
-- Embedding time optimization
-- Batch insertion limits in Chroma
-- Persistence issues (Client vs PersistentClient)
+## 📌 Overview
 
-✅ “Sample Output”
-what is about scheduled scripts
+This project implements a **Retrieval-Augmented Generation (RAG)** pipeline over a large (~3000 pages) Polarion documentation PDF.
 
-Top results:
+The system allows users to:
 
-Result 1 (Page 2715):
-Distance: 0.6602 | Similarity: 0.3398
-• You can view information on any script run in
-  Script Monitor. (
-  Administration
-Scripting
-  Script Monitor)
-• If you select Logs Stored you can also view the script's log in
-  Script Monitor.
-• You will see an UNABLE TO START error for a
-  Scheduled script if:
-◦ You schedule a script too of ...
+* Ask natural language questions
+* Retrieve relevant documentation chunks
+* Generate grounded answers using an LLM
 
-Result 2 (Page 2707):
-Distance: 0.6621 | Similarity: 0.3379
-eduled Scripts
-Create and configure Scheduled scripts
-Scheduled Scripts let you plan and execute Polarion scripts automatically at predefined intervals.
-If you run the scripts regularly, you can automate routine processes like data cleaning and validation,
-generate daily/weekly/monthly reports and m ...
+---
 
-Result 3 (Page 2712):
-Distance: 0.6630 | Similarity: 0.3370
-Note
-You are notified that the script will run on your behalf.
-11. Click OK to confirm this and save the script.
-Configure a script schedule
-Procedure
-1. Select the
-  Repository scope.
-2. Navigate to
-  Scheduled Scripts. (
-  Administration
-  Scripting
-  Scheduled Scripts)
-A table of existing Sch ...
+## 🚀 Features
 
-------------------------------------------------------------
+* ✅ Dense vector search using embeddings
+* ✅ Hybrid retrieval (Dense + BM25)
+* ✅ Cross-encoder reranking for precision
+* ✅ Context compression for cleaner inputs
+* ✅ Grounded answer generation (no hallucinations)
+* ✅ Evaluation framework:
 
+  * Recall@K
+  * Relaxed Recall
+  * Keyword scoring
+  * LLM-based faithfulness
 
+---
 
-✅ “Future Improvements”
+## 🏗️ Architecture
 
-- Add OpenAI for full RAG
-- Add UI (Streamlit)
-- Improve chunking strategy (semantic chunking)
-- Add reranking
+```
+User Query
+   ↓
+Embedding (Dense Search)
+   +
+BM25 (Keyword Search)
+   ↓
+Merge Results
+   ↓
+Re-ranking (Cross Encoder)
+   ↓
+Context Compression
+   ↓
+LLM (Answer Generation)
+   ↓
+Evaluation (Offline)
+```
+
+---
+
+## 📂 Project Structure
+
+```
+src/
+├── pdf_loader.py       # Load PDF documents
+├── chunker.py          # Chunking logic
+├── rag.py              # Core RAG pipeline
+├── query.py            # CLI interaction
+├── evaluator.py        # Evaluation metrics
+├── eval_runner.py      # Evaluation runner
+├── main.py             # Entry point
+```
+
+---
+
+## ⚙️ Setup
+
+### 1. Install dependencies
+
+```bash
+pip install chromadb sentence-transformers openai python-dotenv rank-bm25
+```
+
+---
+
+### 2. Set environment variable
+
+Create `.env` file:
+
+```
+OPENAI_API_KEY=your_api_key_here
+```
+
+---
+
+### 3. Run the system
+
+```bash
+python src/main.py
+```
+
+---
+
+### 4. Run evaluation
+
+```bash
+python src/eval_runner.py
+```
+
+---
+
+## 📊 Evaluation Metrics
+
+| Metric             | Purpose                                |
+| ------------------ | -------------------------------------- |
+| Recall@K           | Measures if correct page is retrieved  |
+| Relaxed Recall     | Checks semantic retrieval correctness  |
+| Keyword Score      | Basic answer quality proxy             |
+| Faithfulness (LLM) | Verifies answer is grounded in context |
+
+---
+
+## 🧠 Key Learnings
+
+* Retrieval quality is more important than generation
+* Hybrid search improves coverage significantly
+* Reranking improves precision
+* Evaluation is essential for improving RAG systems
+* Multiple document sections can contain valid answers
+
+---
